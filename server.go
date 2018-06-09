@@ -5,9 +5,6 @@ import (
 	"mime"
 	"fmt"
 	
-	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
-
 	"net/http"
 	"io/ioutil"
 
@@ -23,7 +20,6 @@ type Book struct{
 	Image string;
 };
 
-var db *sql.DB;
 
 func loadPage(name string) (string, error) {
 	filename := "server/pages/" + name + ".html"
@@ -288,12 +284,7 @@ func recommendHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func server(){
-	var err error;
-	db, err = sql.Open("sqlite3", databasePath);
-	if err != nil {
-		log.Fatal(err);
-	}
-
+	
 	setupUserRecommendData();
 
 	r := mux.NewRouter()
