@@ -1,0 +1,2 @@
+mkdir -p build 
+go build -o build/datamining && ./build/datamining $1

@@ -1,0 +1,96 @@
+body{
+	margin:40px auto;
+	margin-top: 10px;
+	max-width:650px;
+	line-height:1.6;
+	font-size:18px;
+	color:#000;
+	padding:0 10px;
+	font-family: helvetica;
+}
+h1,h2,h3{line-height:1.2}
+
+.book{
+    width: 120px;    
+    float: left;
+    background: #fffbeb;
+    transition: 0.2s opacity;
+    opacity: 1.0;
+    margin: 3px;
+    padding: 4px;
+}
+.book .top{
+	width:100%;
+	text-align: center;
+}
+.book .bottom{
+	width:100%;
+	text-align: center;
+}
+.book .bottom .name{
+	font-size: 13px;
+    line-height: 13px;
+    margin: 2px;
+}
+
+.book:hover{
+	opacity: 0.7;
+}
+
+.books-you-like{
+	width: 100%;
+	float:left;
+}
+
+.books-you-like .top, .books-you-like .bottom{
+	width: 100%;
+	float: left;
+}
+
+.recommendations{
+	width: 100%;
+	float:left;
+}
+
+#search-result{
+	width: 670px;
+}
+
+.search-books{
+	width: 400px;
+	height: 50px;
+	float: left;
+	margin-left: calc(50% - 180px);
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.search-books input{
+	width: 100%;
+    height: 35px;
+    border: 1px solid #0000005c;
+    border-radius: 3px;
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+    font-size: 20px;
+    padding-left: 10px;
+    float: left;
+}
+
+.search-books button{
+    height: 39px;
+    background: #86c726;
+    color: #FFF;
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    text-transform: uppercase;
+    border-radius: 0px;
+    border: none;
+}
+
+
+.book-list{
+	display: flex; /* or inline-flex */
+	flex-wrap: wrap;
+	float:left;
+}
