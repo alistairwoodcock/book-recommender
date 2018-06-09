@@ -6,7 +6,7 @@ Getting this cleaned up and done:
 	x Clean up memory issues
 	x Quick security inspection to make sure we're not exposing anything dangerously
 	x Fix defer issue
-	o Initialise git repo
+	x Initialise git repo
 	o Write a README which includes link to datasource and explanation of what we did here
 	  maybe have a nice screenshot too
   	o Place on a server somewhere for us to use
