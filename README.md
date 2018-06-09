@@ -5,4 +5,4 @@ Our database uses SQLite with the book data coming from [goodbooks-10k](http://f
 
 You can give it a go soon (I just need to set it up on my server)
 
-![Screenshot](/resouces/screenshot.png?raw=true)
+![Screenshot](/resources/screenshot.png?raw=true)

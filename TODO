@@ -7,7 +7,7 @@ Getting this cleaned up and done:
 	x Quick security inspection to make sure we're not exposing anything dangerously
 	x Fix defer issue
 	x Initialise git repo
-	o Write a README which includes link to datasource and explanation of what we did here
+	x Write a README which includes link to datasource and explanation of what we did here
 	  maybe have a nice screenshot too
   	o Place on a server somewhere for us to use
 
