@@ -104,6 +104,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE LOWER(title) LIKE '%' || ? || '%'
 		OR LOWER(authors) LIKE '%' || ? || '%'
 		ORDER BY average_rating
+		LIMIT 14
 	`, post.Search, post.Search);
 
     if err != nil {
@@ -128,126 +129,86 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func likesHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	
-	var err error;
-
-	ret := new(struct {Books []Book});
-	ret.Books = make([]Book, 0);
-
-	defer json.NewEncoder(w).Encode(ret);
-
-	rows, err := db.Query(`
-		SELECT books.book_id, title, image_url 
-		FROM books
-		INNER JOIN user_likes ON books.book_id = user_likes.book_id
-	`);
-
-    if err != nil {
-		log.Fatal(err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		book := Book{};
-		
-		err = rows.Scan(&book.Id, &book.Title, &book.Image);
-		if err != nil {
-			log.Fatal(err);
-		}
-
-		ret.Books = append(ret.Books, book);
-	}	
-}
-
-func likeHandler(w http.ResponseWriter, r *http.Request) {
+func bookDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json");
+
+	fmt.Println(r.Body);
 
 	decoder := json.NewDecoder(r.Body)
 	encoder := json.NewEncoder(w);
 
+	ret := new(struct {
+		Success bool
+		Book Book
+	});
+	ret.Success = false;
 
+	defer encoder.Encode(ret);
+	
 	req := struct {
 		Id int
 	}{
 		-1,
 	}
-
-	ret := new(struct {Success bool});
-	ret.Success = false;
-
-	defer encoder.Encode(ret);
-	
 	
 	err := decoder.Decode(&req);
 
 	if(err != nil){
-		print(err);
+		fmt.Println("decode failed");
 		return;
 	}
+
+	fmt.Println("looking for book with id: ", req.Id);
 
 	if(req.Id < 0){
 		print("Negative id given");
 		return;
 	}
 
-	bookRow, err := db.Query(`SELECT book_id FROM books WHERE book_id = ?`, req.Id);
-	if(err != nil || !bookRow.Next()){
+	bookRow, err := db.Query(`SELECT book_id, title, image_url FROM books WHERE book_id = ?`, req.Id);
+	if(err != nil){
 		print("couldn't find book with given book_id");
 		return;
 	}
-	bookRow.Close();
 
-	stmt, err := db.Prepare(`INSERT INTO user_likes (book_id) VALUES (?); `);
+	defer bookRow.Close();
+
+	if(bookRow.Next()){
+		book := Book{};
+		err := bookRow.Scan(&book.Id, &book.Title, &book.Image);
+
+		if(err != nil){
+			print("Scanning book failed");
+			return;
+		}
+
+		ret.Book = book;
+		ret.Success = true;
+
+	} else {
+		print("no book found");
+		return;
+	}
+}
+
+func recommendHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json");
+
+	decoder := json.NewDecoder(r.Body)
+	
+	req := struct {
+		LikedBookIds []int
+	}{
+		nil,
+	}
+
+	err := decoder.Decode(&req);
 
 	if(err != nil){
 		print(err);
 		return;
 	}
-	
-	_, err = stmt.Exec(req.Id)
-
-
-    if(err != nil){
-    	print("couldn't insert given book_id");
-    	return;
-    } else {
-    	ret.Success = true;
-    }
-}
-
-func unlikeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json");
-
-	req := struct {
-		Id int
-	}{
-		-1,
-	}
-
-	ret := new(struct {Success bool});
-	ret.Success = false;
-	
-	defer json.NewEncoder(w).Encode(ret);
-
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req);
-
-	if(err != nil){
-		return;
-	}
-
-	stmt, err := db.Prepare(`DELETE FROM user_likes WHERE book_id = ?`)
-
-	stmt.Exec(req.Id);
-
-	ret.Success = true;
-}
-
-
-func recommendHandler(w http.ResponseWriter, r *http.Request) {
 
 	ret := new(struct {
 		Books []Book
@@ -260,7 +221,7 @@ func recommendHandler(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	fmt.Println("generating recommendation for ", 16, " books");
-	bookIDs := generateRecommendation(16);
+	bookIDs := generateRecommendation(req.LikedBookIds, 16);
 	fmt.Println("finished recommendation");
 	fmt.Println("took ", time.Since(start));
 
@@ -301,9 +262,7 @@ func server(){
 
 	r.HandleFunc("/", homePageHandler);
 	r.HandleFunc("/api/search", searchHandler);
-	r.HandleFunc("/api/likes", likesHandler);
-	r.HandleFunc("/api/like", likeHandler);
-	r.HandleFunc("/api/unlike", unlikeHandler);
+	r.HandleFunc("/api/book", bookDetailsHandler);
 	r.HandleFunc("/api/recommend", recommendHandler);
 
 	http.Handle("/", r)

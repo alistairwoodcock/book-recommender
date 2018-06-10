@@ -7,15 +7,27 @@
 </head>
 <body>
 	<div class="search-books"> 
-		<input id="book-search" type="text" placeholder="search">
+		<input id="book-search" type="text" placeholder="search books">
 	</div>
 
-	<div id="search-result" class="book-list">
-		
+	<div id="project-info" class="hidden">
+		<p>This is a project made for my data mining university course</p>
+		<p>Search for books in the search bar above, click to add them to your liked books and you'll receive recommendations.</p>
+		<p>You can view all the code for this project <a href="https://www.github.com/alistairwoodcock/book-recommender">here on github</a></p>
+		<p>The algortihm used in this implementaiton is different to the collaborative filtering I researched due to some issues inherent in calculating user similarities and memory sizes for getting it on a small server</p>
+	</div>
+
+	<div id="search-area">
+		<div class="top hidden">
+			<h2>Search results:</h2>
+		</div>
+		<div id="search-result" class="bottom book-list">
+
+		</div>
 	</div>
 
 	<div class="books-you-like">
-		<div class="top">
+		<div class="top hidden">
 			<h2>You liked: </h2>
 		</div>
 		<div id="liked-books" class="bottom book-list">

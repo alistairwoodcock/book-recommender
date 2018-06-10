@@ -2,7 +2,6 @@ window.onload = app;
 
 function app(){
 	document.querySelector("#book-search").addEventListener("keyup", bookSearch);
-	updateLikedBooks();
 	updateRecommendedBooks();
 }
 
@@ -18,37 +17,41 @@ app.state = {
 };
 
 function likeBook(id){
-	sendBooklike(id, (res) => {
-		if(res.Success){
-			updateLikedBooks();	
-		}
-	})
-}
+	var found = app.state.likes.find(book => book.Id == id);
 
-function unlikeBook(id){
-	sendBookUnlike(id, (res) => {
+	if(found != undefined) return;
+	
+	fetchBookDetails(id, (res) => {
 		if(res.Success){
-			updateLikedBooks();	
+			app.state.likes.push(res.Book);
+			renderLikedBooks();
+			updateRecommendedBooks();
 		}
-	})	
-}
-
-function updateLikedBooks(){
-	fetchLikedBooks((res) => {
-		app.state.likes = res.Books;
-		renderLikedBooks();
-		updateRecommendedBooks();
 	});
 }
 
+function unlikeBook(id){
+	var newLikes = app.state.likes.filter(book => book.Id != id);
+
+	app.state.likes = newLikes;
+
+	renderLikedBooks();
+	updateRecommendedBooks();
+}
+
 function updateRecommendedBooks(){
-	fetchRecommendations((res) => {
+
+	likedBookIds = app.state.likes.map(book => book.Id);
+
+	fetchRecommendations(likedBookIds, (res) => {
 		app.state.recommended = res.Books;
 		renderRecommendedBooks();
+		renderInfo();
 	})
 }
 
 function renderLikedBooks(){
+	var likedTitle = document.querySelector(".books-you-like .top");
 	var list = document.getElementById("liked-books");
 
 	var html = "";
@@ -58,9 +61,16 @@ function renderLikedBooks(){
 	}
 
 	list.innerHTML = html;
+
+	if(app.state.likes.length == 0){
+		likedTitle.classList.add('hidden');
+	} else {
+		likedTitle.classList.remove('hidden');
+	}
 }
 
 function renderRecommendedBooks(){
+	var recommendTitle = document.querySelector(".recommendations .top");
 	var list = document.getElementById("recommended-books");
 
 	var html = "";
@@ -70,6 +80,12 @@ function renderRecommendedBooks(){
 	}
 
 	list.innerHTML = html;
+
+	if(app.state.recommended.length == 0){
+		recommendTitle.classList.add('hidden');
+	} else {
+		recommendTitle.classList.remove('hidden');
+	}
 }
 
 
@@ -80,10 +96,12 @@ function bookSearch(event){
 	fetchSearchResults((res) => {
 		app.state.search.result = res.Books;
 		renderBookSearch();
+		renderInfo();
 	});
 }
 
 function renderBookSearch(){
+	var areaTitle = document.querySelector("#search-area .top");
 	var list = document.getElementById("search-result");
 	
 	var html = "";
@@ -93,13 +111,31 @@ function renderBookSearch(){
 	}
 
 	list.innerHTML = html;
+
+	if(app.state.search.result.length == 0){
+		areaTitle.classList.add('hidden');
+	} else {
+		areaTitle.classList.remove('hidden');
+	}
+}
+
+function renderInfo(){
+  var infoEl = document.querySelector("#project-info");
+  if(app.state.search.result.length == 0 && 
+     app.state.likes.length == 0 &&
+     app.state.recommended.length == 0)
+  {
+  	infoEl.classList.remove('hidden');
+  } else {
+  	infoEl.classList.add('hidden');
+  }
 }
 
 function renderBook(book, onClickFuncName){
 	return `
 		<div class="book" onclick="${onClickFuncName}(${book.Id})">
 			<div class="top">
-				<img src="${book.Image}"/>
+				<img src="${book.Image}" alt="${book.Title}"/>
 			</div>
 			<div class="bottom">
 				<p class="name">${book.Title}</p>
@@ -109,8 +145,10 @@ function renderBook(book, onClickFuncName){
 }
 
 
+
+
 var fetchRecommendationsXHR = null;
-function fetchRecommendations(func){
+function fetchRecommendations(likedBookIds, func){
 	if(fetchRecommendationsXHR != null){
 		fetchRecommendationsXHR.abort();
 		fetchRecommendationsXHR = null;
@@ -118,7 +156,7 @@ function fetchRecommendations(func){
 	var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
 	xmlhttp.open("POST", "/api/recommend");
 	xmlhttp.setRequestHeader("Content-Type", "application/json");
-	xmlhttp.send(JSON.stringify({search: app.state.search.term}));
+	xmlhttp.send(JSON.stringify({LikedBookIds: likedBookIds}));
 	fetchRecommendationsXHR = xmlhttp;
 	
 	xmlhttp.onload = function(){
@@ -157,17 +195,17 @@ function fetchSearchResults(func){
 	}
 }
 
-var fetchLikesXHR = null;
-function fetchLikedBooks(func){
-	if(fetchLikesXHR != null){
-		fetchLikesXHR.abort();
-		fetchLikesXHR = null;
+var bookDetailsXHR = null;
+function fetchBookDetails(id, func) {
+	if(bookDetailsXHR != null){
+		bookDetailsXHR.abort();
+		bookDetailsXHR = null;
 	}
 	var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
-	xmlhttp.open("GET", "/api/likes");
+	xmlhttp.open("POST", "/api/book");
 	xmlhttp.setRequestHeader("Content-Type", "application/json");
-	xmlhttp.send(JSON.stringify({search: app.state.search.term}));
-	fetchLikesXHR = xmlhttp;
+	xmlhttp.send(JSON.stringify({Id: id}));
+	bookDetailsXHR = xmlhttp;
 	xmlhttp.onload = function(){
 		
 		if (xmlhttp.readyState == 4 && xmlhttp.status == "200") {
@@ -176,42 +214,6 @@ function fetchLikedBooks(func){
 		} else {
 			console.log("error: %s", xmlhttp.responseText);
 		}
-		fetchLikesXHR = null;
+		bookDetailsXHR = null;
 	}
-}
-
-function sendBooklike(id, func){
-	
-	var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
-	xmlhttp.open("POST", "/api/like");
-	xmlhttp.setRequestHeader("Content-Type", "application/json");
-	xmlhttp.send(JSON.stringify({id: id}));
-	fetchXHR = xmlhttp;
-	xmlhttp.onload = function(){
-		
-		if (xmlhttp.readyState == 4 && xmlhttp.status == "200") {
-			var result = JSON.parse(xmlhttp.responseText);
-			func(result);
-		} else {
-			console.log("error: %s", xmlhttp.responseText);
-		}
-	}	
-}
-
-function sendBookUnlike(id, func){
-	
-	var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
-	xmlhttp.open("POST", "/api/unlike");
-	xmlhttp.setRequestHeader("Content-Type", "application/json");
-	xmlhttp.send(JSON.stringify({id: id}));
-	fetchXHR = xmlhttp;
-	xmlhttp.onload = function(){
-		
-		if (xmlhttp.readyState == 4 && xmlhttp.status == "200") {
-			var result = JSON.parse(xmlhttp.responseText);
-			func(result);
-		} else {
-			console.log("error: %s", xmlhttp.responseText);
-		}
-	}	
 }

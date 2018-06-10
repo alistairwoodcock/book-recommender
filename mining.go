@@ -82,7 +82,7 @@ func setupUserRecommendData() {
 
 }
 
-func generateRecommendation(numberOfBooks int) []int{
+func generateRecommendation(likedBookIds []int, numberOfBooks int) []int{
 	var recommendations []int; //return array
 	
 	//Active User
@@ -91,18 +91,9 @@ func generateRecommendation(numberOfBooks int) []int{
 	user1.WantToRead = hashmap.New();
 	defer user1.WantToRead.Clear();
 
-	likedBooksRow, err := db.Query(`select book_id from user_likes where 1`);
-	checkError(err);
-
-	for likedBooksRow.Next() {
-		var BookId int;
-		err := likedBooksRow.Scan(&BookId);
-		checkError(err);
-
-		user1.WantToRead.Put(BookId, true); // user1.WantToRead = append(user1.WantToRead, BookId);
+	for _, BookId := range likedBookIds {
+		user1.WantToRead.Put(BookId, true);
 	}
-
-	likedBooksRow.Close();
 
 	fmt.Println("user likes: ", user1.WantToRead.Size());
 
