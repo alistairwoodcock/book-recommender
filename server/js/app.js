@@ -19,13 +19,17 @@ app.state = {
 
 function likeBook(id){
 	sendBooklike(id, (res) => {
-		updateLikedBooks();
+		if(res.Success){
+			updateLikedBooks();	
+		}
 	})
 }
 
 function unlikeBook(id){
 	sendBookUnlike(id, (res) => {
-		updateLikedBooks();
+		if(res.Success){
+			updateLikedBooks();	
+		}
 	})	
 }
 

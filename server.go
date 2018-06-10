@@ -4,6 +4,7 @@ import (
 	"log"
 	"mime"
 	"fmt"
+	"time"
 	
 	"net/http"
 	"io/ioutil"
@@ -183,34 +184,34 @@ func likeHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req);
 
 	if(err != nil){
-		return;
-	}
-
-	stmt, err := db.Prepare(`INSERT INTO user_likes (book_id) VALUES (?); `);
-    
-	if(err != nil){
+		print(err);
 		return;
 	}
 
 	if(req.Id < 0){
+		print("Negative id given");
 		return;
 	}
 
 	bookRow, err := db.Query(`SELECT book_id FROM books WHERE book_id = ?`, req.Id);
+	if(err != nil || !bookRow.Next()){
+		print("couldn't find book with given book_id");
+		return;
+	}
+	bookRow.Close();
+
+	stmt, err := db.Prepare(`INSERT INTO user_likes (book_id) VALUES (?); `);
 
 	if(err != nil){
+		print(err);
 		return;
 	}
-
-	if(!bookRow.Next()){
-		return;
-	}
-
+	
 	_, err = stmt.Exec(req.Id)
 
 
     if(err != nil){
-    	print(err);
+    	print("couldn't insert given book_id");
     	return;
     } else {
     	ret.Success = true;
@@ -257,7 +258,11 @@ func recommendHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer json.NewEncoder(w).Encode(ret);
 
+	start := time.Now()
+	fmt.Println("generating recommendation for ", 16, " books");
 	bookIDs := generateRecommendation(16);
+	fmt.Println("finished recommendation");
+	fmt.Println("took ", time.Since(start));
 
 	for _, bookID := range bookIDs {
 
@@ -281,6 +286,7 @@ func recommendHandler(w http.ResponseWriter, r *http.Request) {
 
 		row.Close();
 	}
+
 }
 
 func server(){

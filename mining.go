@@ -83,7 +83,6 @@ func setupUserRecommendData() {
 }
 
 func generateRecommendation(numberOfBooks int) []int{
-
 	var recommendations []int; //return array
 	
 	//Active User
